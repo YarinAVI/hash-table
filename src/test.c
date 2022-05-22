@@ -29,7 +29,7 @@ size_t HashFunct(CItem x) {
     return result;
 }
 int main(void) {
-    const char *ex[3] = {"Allah Wakbar","ISIS","     WELCOMEE    "};
+    const char *ex[3] = {"test 1","       test ","     TEEEEEST2    "};
     HashTable ht = newHashTable(ctor,dtor,compar,HashFunct);
     for(int i=0;i<3;i++) {
         HashTableInsert(ht,ex[i]);

@@ -120,7 +120,7 @@ HashTable newHashTable(Item (*ctor)(CItem),
         /* if one of the bins allocation failed, dealloc every bin and return NULL. */
         if(HTret->Bins[i].SlotsNo == 0) {
             for(j=0;j<i;j++) {
-                BinDestroy(&HTret->Bins[i],dtor);
+                BinDestroy(&HTret->Bins[j],dtor);
             }
             free(HTret->Bins);
             free(HTret);
