@@ -13,78 +13,78 @@
  * 
  */
 typedef struct  {
-    Item * Items;
+    HItem * HItems;
     size_t SlotsNo; /* how many slots */
 }Bin;
 
 static Bin newBin(void) {
     Bin ret;
     ret.SlotsNo = BASE_ITEMS_FOR_EACH_BIN;
-    ret.Items = calloc(ret.SlotsNo,sizeof(Item));
-        if(!ret.Items) {
+    ret.HItems = calloc(ret.SlotsNo,sizeof(HItem));
+        if(!ret.HItems) {
             ret.SlotsNo = 0;
             return ret;
         }
     return ret;
 }
 static int BinGrow(Bin *b) {
-    Item * temp;
+    HItem * temp;
     size_t i = b->SlotsNo;
     b->SlotsNo *=2;
-    temp = realloc(b->Items,b->SlotsNo * sizeof(Item));
+    temp = realloc(b->HItems,b->SlotsNo * sizeof(HItem));
     if(!temp) {
         b->SlotsNo /=2;
         return -1;
     }
-    b->Items = temp;
+    b->HItems = temp;
     for(;i<b->SlotsNo;i++)
-        b->Items[i] = NULL;
+        b->HItems[i] = NULL;
     return 0;
 }
-static Item BinInsert(Bin * b,CItem clone,Item(*ctor)(CItem)) {
+static HItem BinInsert(Bin * b,CHItem clone,HItem(*ctor)(CHItem)) {
     size_t i;
     /* look for an empty slot */
-    for(i=0;i<b->SlotsNo && b->Items[i];i++);
+    for(i=0;i<b->SlotsNo && b->HItems[i];i++);
     /* need to resize the bin */
     if(i == b->SlotsNo) {
         if(BinGrow(b) !=0) {
             return NULL;
         }
     }
-    b->Items[i] = ctor(clone);
-    return b->Items[i];
+    b->HItems[i] = ctor(clone);
+    return b->HItems[i];
 }
-static Item * BinFind(Bin * b, CItem clone, int (*compar)(CItem,CItem)) {
+static HItem * BinFind(Bin * b, CHItem clone, int (*compar)(CHItem,CHItem)) {
     size_t i;
     for(i=0;i<b->SlotsNo;i++) {
-        if(b->Items[i] && compar(clone,b->Items[i]) == 0) {
-            return &(b->Items[i]);
+        if(b->HItems[i] && compar(clone,b->HItems[i]) == 0) {
+            return &(b->HItems[i]);
         }
     }
     return NULL;
 }
-static void BinDelete(Bin *b,CItem clone, void (*dtor)(Item), int (*compar)(CItem,CItem)) {
-    Item * target = BinFind(b,clone,compar);
+static void BinDelete(Bin *b,CHItem clone, void (*dtor)(HItem), int (*compar)(CHItem,CHItem)) {
+    HItem * target = BinFind(b,clone,compar);
     if(target) {
         dtor(*target);
         (*target) = NULL;
     }
 }
-static void BinDestroy(Bin *b, void (*dtor)(Item)) {
+static void BinDestroy(Bin *b, void (*dtor)(HItem)) {
     size_t i;
     for(i=0;i<b->SlotsNo;i++) {
-        if(b->Items[i])
-            dtor(b->Items[i]);
+        if(b->HItems[i])
+            dtor(b->HItems[i]);
     }
     b->SlotsNo = 0;
-    free(b->Items);
+    free(b->HItems);
 }
 
 /*===================================hash-table code===================================*/
 
 /**
  * @brief HashTable is implemented using a list of bins,
- *        each bin is a list of Items, where the hash key maps to a specific "bin".
+ *        each bin is a list of HItems, where the hash key maps to a specific "bin".
  */
 
 #define BASE_NUMBER_OF_BINS     512
@@ -93,16 +93,16 @@ struct HashTable {
     Bin *   Bins;
     size_t  BinsNo; /* how many bins are being used in the hash table */
 
-    Item (*ctor)(CItem);
-    void (*dtor)(Item);
-    int (*compar)(CItem,CItem);
-    size_t (*HashFunct)(CItem);
+    HItem (*ctor)(CHItem);
+    void (*dtor)(HItem);
+    int (*compar)(CHItem,CHItem);
+    size_t (*HashFunct)(CHItem);
 };
 
-HashTable newHashTable(Item (*ctor)(CItem),
-             void (*dtor)(Item),
-             int (*compar)(CItem,CItem),
-             size_t (*HashFunct)(CItem)) {
+HashTable newHashTable(HItem (*ctor)(CHItem),
+             void (*dtor)(HItem),
+             int (*compar)(CHItem,CHItem),
+             size_t (*HashFunct)(CHItem)) {
     size_t i,j;
     /* allocate memory for the ht struct */
     HashTable HTret = calloc(1,sizeof(struct HashTable));
@@ -144,21 +144,21 @@ void HashTableDestroy(HashTable HT) {
     free(HT);
 }
 
-Item HashTableFind(HashTable HT,CItem clone) {
+HItem HashTableFind(HashTable HT,CHItem clone) {
     /* first get the hash key for the specific clone*/
     size_t TargetBin = HT->HashFunct(clone) % HT->BinsNo;
-    Item * TargetItem = BinFind(&HT->Bins[TargetBin],clone,HT->compar);
-    if(TargetItem) {
-        return *TargetItem;
+    HItem * TargetHItem = BinFind(&HT->Bins[TargetBin],clone,HT->compar);
+    if(TargetHItem) {
+        return *TargetHItem;
     }
     return NULL;
 }
-Item HashTableInsert(HashTable HT,CItem clone) {
+HItem HashTableInsert(HashTable HT,CHItem clone) {
     /* first get the hash key for the specific clone*/
     size_t TargetBin = HT->HashFunct(clone) % HT->BinsNo;
     return BinInsert(&HT->Bins[TargetBin],clone,HT->ctor);
 }
-void HashTableDelete(HashTable HT,CItem clone) {
+void HashTableDelete(HashTable HT,CHItem clone) {
     /* first get the hash key for the specific clone*/
     size_t TargetBin = HT->HashFunct(clone) % HT->BinsNo;
     BinDelete(&HT->Bins[TargetBin],clone,HT->dtor,HT->compar);
