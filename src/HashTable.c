@@ -66,15 +66,18 @@ static HItem * BinFind(Bin * b, CHItem clone, int (*compar)(CHItem,CHItem)) {
 static void BinDelete(Bin *b,CHItem clone, void (*dtor)(HItem), int (*compar)(CHItem,CHItem)) {
     HItem * target = BinFind(b,clone,compar);
     if(target) {
-        dtor(*target);
+        if(dtor)
+            dtor(*target);
         (*target) = NULL;
     }
 }
 static void BinDestroy(Bin *b, void (*dtor)(HItem)) {
     size_t i;
-    for(i=0;i<b->SlotsNo;i++) {
-        if(b->HItems[i])
-            dtor(b->HItems[i]);
+    if(dtor) {
+        for(i=0;i<b->SlotsNo;i++) {
+            if(b->HItems[i])
+                dtor(b->HItems[i]);
+        }
     }
     b->SlotsNo = 0;
     free(b->HItems);
