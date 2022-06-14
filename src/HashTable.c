@@ -96,10 +96,14 @@ struct HashTable {
     Bin *   Bins;
     size_t  BinsNo; /* how many bins are being used in the hash table */
 
-    HItem (*ctor)(CHItem);
-    void (*dtor)(HItem);
-    int (*compar)(CHItem,CHItem);
-    size_t (*HashFunct)(CHItem);
+    HItem * Iterator;
+    Bin *   BinIterator;
+
+    size_t  ItemCount;
+    HItem   (*ctor)(CHItem);
+    void    (*dtor)(HItem);
+    int     (*compar)(CHItem,CHItem);
+    size_t  (*HashFunct)(CHItem);
 };
 
 HashTable newHashTable(HItem (*ctor)(CHItem),
@@ -134,6 +138,8 @@ HashTable newHashTable(HItem (*ctor)(CHItem),
     HTret->ctor         = ctor;
     HTret->dtor         = dtor;
     HTret->HashFunct    = HashFunct;
+    HTret->BinIterator  = &HTret->Bins[0];
+    HTret->Iterator     = HTret->Bins[0].HItems;
     return HTret;
 }
 
@@ -146,7 +152,26 @@ void HashTableDestroy(HashTable HT) {
     free(HT->Bins);
     free(HT);
 }
-
+HItem HashTableGetNextSet(HashTable HT) {
+    HItem ret;
+    do {
+        do {
+            ret = *HT->Iterator;
+            HT->Iterator++;
+            if(ret)
+                return ret;
+        }while(HT->Iterator < (HT->BinIterator->HItems + HT->BinIterator->SlotsNo ));
+        HT->BinIterator++;
+        HT->Iterator = HT->BinIterator->HItems;
+    }while(HT->BinIterator < (HT->Bins + HT->BinsNo));
+        HT->BinIterator = HT->Bins;
+        HT->Iterator = HT->BinIterator->HItems;
+return NULL;
+}
+void HashTableResetIterator(HashTable HT) {
+    HT->BinIterator = HT->Bins;
+    HT->Iterator = HT->BinIterator->HItems;
+}
 HItem HashTableFind(HashTable HT,CHItem clone) {
     /* first get the hash key for the specific clone*/
     size_t TargetBin = HT->HashFunct(clone) % HT->BinsNo;
@@ -158,11 +183,19 @@ HItem HashTableFind(HashTable HT,CHItem clone) {
 }
 HItem HashTableInsert(HashTable HT,CHItem clone) {
     /* first get the hash key for the specific clone*/
+    HItem ret;
     size_t TargetBin = HT->HashFunct(clone) % HT->BinsNo;
-    return BinInsert(&HT->Bins[TargetBin],clone,HT->ctor);
+    ret = BinInsert(&HT->Bins[TargetBin],clone,HT->ctor);
+    if(ret)
+        HT->ItemCount++;
+    return ret;
+}
+size_t HashTableItemCount(HashTable HT) {
+    return HT->ItemCount;
 }
 void HashTableDelete(HashTable HT,CHItem clone) {
     /* first get the hash key for the specific clone*/
     size_t TargetBin = HT->HashFunct(clone) % HT->BinsNo;
     BinDelete(&HT->Bins[TargetBin],clone,HT->dtor,HT->compar);
+    HT->ItemCount--;
 }

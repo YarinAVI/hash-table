@@ -77,6 +77,28 @@ void HashTableDelete(HashTable HT,CHItem clone);
  */
 void HashTableDestroy(HashTable HT);
 
+/**
+ * @brief 
+ * 
+ * @param HT 
+ * @return HItem 
+ */
+HItem HashTableGetNextSet(HashTable HT);
+
+/**
+ * @brief 
+ * 
+ * @param HT 
+ */
+void HashTableResetIterator(HashTable HT);
+
+/**
+ * @brief 
+ * 
+ * @param HT 
+ * @return size_t 
+ */
+size_t HashTableItemCount(HashTable HT);
 #ifdef __cplusplus
 }
 #endif
