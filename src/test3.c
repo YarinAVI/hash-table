@@ -31,6 +31,7 @@ size_t HashFunct(CHItem x) {
 int main(void) {
     const char *ex[8] = {"test1","test2","test3","Test100","too","Foo","adsadasdsad","bobo"};
     HashTable ht = newHashTable(ctor,dtor,compar,HashFunct);
+    char * str;
     for(int i=0;i<8;i++) {
         HashTableInsert(ht,ex[i]);
     }
@@ -46,7 +47,11 @@ int main(void) {
         if(it)
             printf("%s->\n",(char*)it);
     }
-
+    HASH_TABLE_FOR_EACH(ht,str) {
+        if(str) {
+            printf("%s->\n",str);
+        }
+    }
     HashTableDestroy(ht);
 return 0;
 }

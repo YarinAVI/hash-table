@@ -99,6 +99,16 @@ void HashTableResetIterator(HashTable HT);
  * @return size_t 
  */
 size_t HashTableItemCount(HashTable HT);
+
+
+
+
+
+/**
+ * @brief macro for iterating the hashtable
+ * 
+ */
+#define HASH_TABLE_FOR_EACH(ht,it) for(HashTableResetIterator(ht),it=HashTableGetNextSet(ht);it;it=HashTableGetNextSet(ht))
 #ifdef __cplusplus
 }
 #endif
