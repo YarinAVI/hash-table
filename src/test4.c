@@ -35,19 +35,6 @@ int main(void) {
     for(int i=0;i<8;i++) {
         HashTableInsert(ht,ex[i]);
     }
-    size_t size  = HashTableItemCount(ht);
-    HashTableResetIterator(ht);
-    for(int i=0;i<size;i++) {
-        HItem it = HashTableGetNextSet(ht);
-        if(it)
-            printf("%s->\n",(char*)it);
-    }
-    HashTableResetIterator(ht);
-    for(int i=0;i<size;i++) {
-        HItem it = HashTableGetNextSet(ht);
-        if(it)
-            printf("%s->\n",(char*)it);
-    }
     HASH_TABLE_FOR_EACH(ht,str) {
         if(str) {
             printf("%s->\n",str);

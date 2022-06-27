@@ -90,7 +90,7 @@ static void BinDestroy(Bin *b, void (*dtor)(HItem)) {
  *        each bin is a list of HItems, where the hash key maps to a specific "bin".
  */
 
-#define BASE_NUMBER_OF_BINS     512
+#define BASE_NUMBER_OF_BINS     128
 
 struct HashTable {
     Bin *   Bins;
@@ -138,8 +138,8 @@ HashTable newHashTable(HItem (*ctor)(CHItem),
     HTret->ctor         = ctor;
     HTret->dtor         = dtor;
     HTret->HashFunct    = HashFunct;
-    HTret->BinIterator  = &HTret->Bins[0];
-    HTret->Iterator     = HTret->Bins[0].HItems;
+    HTret->BinIterator = HTret->Bins;
+    HTret->Iterator    = HTret->BinIterator->HItems;
     return HTret;
 }
 
@@ -154,19 +154,22 @@ void HashTableDestroy(HashTable HT) {
 }
 HItem HashTableGetNextSet(HashTable HT) {
     HItem ret;
-    do {
-        do {
-            ret = *HT->Iterator;
+    if(HT->BinIterator == (HT->Bins + HT->BinsNo)) {
+        HT->BinIterator = HT->Bins;
+        HT->Iterator    = HT->BinIterator->HItems;
+    }
+    while(HT->BinIterator < (HT->Bins + HT->BinsNo)) {
+        while(HT->Iterator < (HT->BinIterator->HItems + HT->BinIterator->SlotsNo )) {
+            ret = *(HT->Iterator);
             HT->Iterator++;
             if(ret)
                 return ret;
-        }while(HT->Iterator < (HT->BinIterator->HItems + HT->BinIterator->SlotsNo ));
+        }
         HT->BinIterator++;
-        HT->Iterator = HT->BinIterator->HItems;
-    }while(HT->BinIterator < (HT->Bins + HT->BinsNo));
-        HT->BinIterator = HT->Bins;
-        HT->Iterator = HT->BinIterator->HItems;
-return NULL;
+        if(HT->BinIterator < (HT->Bins + HT->BinsNo))
+            HT->Iterator = HT->BinIterator->HItems;
+    }
+    return NULL;
 }
 void HashTableResetIterator(HashTable HT) {
     HT->BinIterator = HT->Bins;
